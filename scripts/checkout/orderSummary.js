@@ -1,4 +1,4 @@
-import { cart, removeFromCart, updateDeliveryOption } from "../../data/cart.js";
+import { cart, removeFromCart, updateDeliveryOption, loadFromStorage } from "../../data/cart.js";
 import { products, getProduct } from "../../data/products.js";
 import { formatCurrency } from "../utils/money.js";
 import dayjs from 'https://unpkg.com/dayjs@1.11.10/esm/index.js';
@@ -6,31 +6,29 @@ import { deliveryOptions, getDeliveryOption } from '../../data/deliveryOptions.j
 import { renderPaymentSummary } from "./paymentSummary.js";
 
 export function renderOrderSummary() {
+    loadFromStorage(); // Carregar dados do carrinho antes de usar
 
     let cartSummaryHTML = '';
 
     cart.forEach((cartItem) => {
-
         const productId = cartItem.productId;
-
         const matchingProduct = getProduct(productId);
-
         const deliveryOptionId = cartItem.deliveryOptionId;
-
         const deliveryOption = getDeliveryOption(deliveryOptionId);
-
         const today = dayjs();
-        const deliveryDate = today.add(
-            deliveryOption.deliveryDays,
-            'days'
-        );
-        const data = deliveryDate.format('dddd, MMMM D');
+        let deliveryDate = '';
+        if (deliveryOption) {
+            deliveryDate = today.add(
+                deliveryOption.deliveryDays,
+                'days'
+            ).format('dddd, MMMM D');
+        }
 
         cartSummaryHTML += ` 
             <div class="cart-item-container 
                 js-cart-item-container-${matchingProduct.id}">
                 <div class="delivery-date">
-                    Delivery date: ${data}
+                    Delivery date: ${deliveryDate}
                 </div>
 
                 <div class="cart-item-details-grid">
@@ -72,17 +70,13 @@ export function renderOrderSummary() {
     document.querySelector('.js-order-summary')
         .innerHTML = cartSummaryHTML;
 
-
     document.querySelectorAll('.js-delete-link')
         .forEach((link) => {
             link.addEventListener('click', () => {
                 const productId = link.dataset.productId;
                 removeFromCart(productId);
-
                 const container = document.querySelector(`.js-cart-item-container-${productId}`);
-
                 container.remove();
-
                 renderPaymentSummary();
             });
         });
@@ -123,7 +117,7 @@ function deliveryOptionsHTML(matchingProduct, cartItem) {
                 data-delivery-option-id="${deliveryOption.id}">
                 <input type="radio"
                     ${isChecked ? 'checked' : ''}
-                    class="delivery-option-input"
+                    class="delivery-option-input js-delivery-option"
                     name="delivery-option-${matchingProduct.id}">
                 <div>
                     <div class="delivery-option-date">
