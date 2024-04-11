@@ -1,5 +1,6 @@
 export function formatCurrency(priceCents) {
-  return (Math.round(priceCents / 100)).toFixed(2);
+  const dollars = (Math.round(priceCents / 100)).toFixed(2);
+  return `$${dollars}`;
 }
 
 export default formatCurrency;
